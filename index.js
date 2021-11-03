@@ -2,6 +2,7 @@ const express = require("express");
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
 const cors = require("cors");
+const { initializeApp } = require("firebase-admin/app");
 
 
 
@@ -19,6 +20,19 @@ const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
+
+
+async function verifyToken(req, res, next) {
+    if (req.headers?.authorization?.startsWith("Bearer ")) {
+        const idToken = req.headers.authorization.split("Bearer ")[1];
+        try {
+            const decodedUser = await admin.auth().verifyIdToken(idToken);
+            req.decodedUserEmail = decodedUser.email;
+        } catch {}
+    }
+    next();
+}
+
 
 async function run() {
     try {
@@ -62,9 +76,18 @@ async function run() {
 
         // Add Orders API
         app.get('/orders', async (req, res) => {
+            const email = req.query.email;
+            if (req.decodedUserEmail === email) {
+                // const query = { email: email };
+                // const cursor = orderCollection.find(query);
+                // const orders = await cursor.toArray();
+                // res.json(orders);
+            }
+            // else {
+            //     res.status(401).json({ message: "User not authorized" });
+            // }
             const cursor = orderCollection.find({});
             const orders = await cursor.toArray();
-            console.log("hit the post api", orders);
             res.json(orders)
         });
 
