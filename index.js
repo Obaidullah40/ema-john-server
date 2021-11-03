@@ -57,16 +57,17 @@ async function run() {
             const query = { key: { $in: keys } };
             // console.log("hit the post api", keys);
             const products = await productsCollection.find(query).toArray();
-            res.json(products);
+            res.send(products);
         });
 
         // Add Orders API
-        app.get('./orders'), async (req, res) => {
+        app.get('/orders', async (req, res) => {
             const cursor = orderCollection.find({});
             const orders = await cursor.toArray();
             console.log("hit the post api", orders);
             res.json(orders)
-        }
+        });
+
         app.post("/orders", async (req, res) => {
             const order = req.body;
             order.createdAt = new Date();
