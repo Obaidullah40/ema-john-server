@@ -2,12 +2,23 @@ const express = require("express");
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
 const cors = require("cors");
-const { initializeApp } = require("firebase-admin/app");
+var admin = require("firebase-admin");
 
 
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+
+// firebase admin initialization 
+
+var serviceAccount = require("./ema-john-simple-8db77-firebase-adminsdk-ozi27-fa1e6f6f95.json");
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
+
+
 
 // middleware
 app.use(cors());
@@ -28,7 +39,10 @@ async function verifyToken(req, res, next) {
         try {
             const decodedUser = await admin.auth().verifyIdToken(idToken);
             req.decodedUserEmail = decodedUser.email;
-        } catch {}
+        }
+        catch {
+            
+        }
     }
     next();
 }
@@ -75,20 +89,17 @@ async function run() {
         });
 
         // Add Orders API
-        app.get('/orders', async (req, res) => {
+        app.get('/orders', verifyToken, async (req, res) => {
             const email = req.query.email;
             if (req.decodedUserEmail === email) {
-                // const query = { email: email };
-                // const cursor = orderCollection.find(query);
-                // const orders = await cursor.toArray();
-                // res.json(orders);
-            }
-            // else {
-            //     res.status(401).json({ message: "User not authorized" });
-            // }
-            const cursor = orderCollection.find({});
-            const orders = await cursor.toArray();
-            res.json(orders)
+                const query = { email: email };
+                const cursor = orderCollection.find(query);
+                const orders = await cursor.toArray();
+                res.json(orders);
+            }           
+            else {
+                res.status(401).json({ message: "User not authorized" });
+            }         
         });
 
         app.post("/orders", async (req, res) => {
